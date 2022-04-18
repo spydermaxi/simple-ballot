@@ -1,7 +1,7 @@
 # Simple Ballot
 A Simple Balloting System that balance weight and chance.
 
-[![QuickStart video](https://img.youtube.com/vi/xSfUJBJqItA/1.jpg)](https://www.youtube.com/watch?v=xSfUJBJqItA)
+https://user-images.githubusercontent.com/42031070/163808861-23625efe-0743-46c5-8ce0-863e29a3cfff.mp4
 
 ---
 
