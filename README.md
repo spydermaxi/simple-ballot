@@ -132,3 +132,7 @@ Given a balloting campaign where the objective is to decide the allocation of ca
    c. This will balance the utilization and encourage more wide spread participation.
 
 ---
+
+This repo is still work in progress. For any contribution, kindly submit and issue and pull request.
+
+Thanks!
