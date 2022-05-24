@@ -1,11 +1,16 @@
 # Simple Ballot
 A Simple Balloting System that balance weight and chance.
 
-
+https://user-images.githubusercontent.com/42031070/163808861-23625efe-0743-46c5-8ce0-863e29a3cfff.mp4
 
 ---
 
 ## Quick Start
+
+Example ballot applicant list can be found [here](https://github.com/spydermaxi/simple-ballot/blob/main/test/applicants.csv).
+
+The condition is to balance the chance for the amount of tickets that they are trying to ballot for.
+The more ticket amount, the lesser the chance during ballot.
 
 1. Import code
 
