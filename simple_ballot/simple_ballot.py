@@ -55,7 +55,7 @@ class System:
 
     def _normalize_data(self, data):
         '''
-        transform supported datat type to pandas.DataFrame
+        transform supported data type to pandas.DataFrame
         '''
 
         if hasattr(data, "keys") and hasattr(data, "values"):
@@ -73,6 +73,10 @@ class System:
             return pd.DataFrame(data)
 
     def _create_logger(self):
+        '''
+        Creates logger for record
+        Creates a log handler and transcipt handler for later export
+        '''
         self.logger = logging.getLogger(__name__)
         self.logger.setLevel(logging.DEBUG)
 
@@ -92,6 +96,9 @@ class System:
         self.logger.addHandler(transcript_handler)
 
     def _add_log_stream(self):
+        '''
+        Adds log streamer
+        '''
         stream_formatter = logging.Formatter('t%(message)s')
         stream_handler = logging.StreamHandler()
         stream_handler.setLevel(logging.DEBUG)
@@ -99,6 +106,9 @@ class System:
         self.logger.addHandler(stream_handler)
 
     def ballot(self):
+        '''
+        Ballot function:
+        '''
         print(f"call [{self.io}] ballot")
 
     def draw(
@@ -108,17 +118,36 @@ class System:
         unique_column='auto',
         show_console=True,
         export_transcript=False,
-        transcript_filename=None,
+        transcript_filename="draw_transcript.txt",
         export_log=False,
-        log_filename=None,
+        log_filename="draw_logs.txt",
         delay=1
     ):
         '''
+        Function to perform lucky draw
+
+        Parameters:
+            resource (int): an integer value of the total available resources for the draw, default is None.
+
+            resource_name (str): the name of the resource, eg: ticket, voucher, etc, default is "".
+
+            unique_column (str/list): if set "auto" system will auto seach columns with number of unique values equals to total length of values. If none found, will raise error. If set to specific named column, user requires to input list of names in a list instance. If more than one name is indicated a combination of these columns will be done to create new column, else will just use the only named column. Default is "auto"
+
+            show_console (bool): if set to True will displace transcript in console, default is False
+
+            export_transcript (bool): if set to True will export transcript to defined path in transcript_filename, default is False
+
+            transcript_filename (str/path): the absolute path for exported transcript. Default is "draw_transcript.txt"
+
+            export_log (bool): if set to True will export transcript to defined path in log_filename, default is False
+
+            log_filename (str/path): the absolute path for exported logs. Default is "draw_logs.txt"
+
         '''
         unique_column_kw = ['auto']
 
         if self.io is None:
-            raise IOError("Require an input data to proceed - no data of file path provided.")
+            raise IOError("Require an input data to proceed - no data or file path provided.")
 
         self._create_logger()
 
@@ -151,80 +180,32 @@ class System:
                 else:
                     raise ValueError(f"Unable to create unique column, length of unique column and length of data is the same - {len(df)}")
             else:
-                raise ValueError(f"Expected unique_column key word to be either {", ".join(unique_column_kw)}, given {unique_column}")
+                raise ValueError(f"Expected unique_column key word to be either {', '.join(unique_column_kw)}, given {unique_column}")
 
         elif isinstance(unique_column, list):
-            if all([])
-        self.logger.info("Checking Columns for unique data")
-        for col in df.columns:
-            if df[col].nunique() == len(df):
-                uid_col = col
-                if input(f"Found column with unique data - {col}.\nUse this?[Y/n] ").lower() in BOOL:
-                    df[uid_col] = df[uid_col].astype('str')
-                    break
+            if all([col in df.columns for col in unique_column]):
+                if len(unique_column) == 1:
+                    df['UID'] = df[unique_column[0]]
+                elif len(unique_column) > 1 and len(unique_column) <= len(df.columns):
+                    df['UID'] = ['-'.join(i) for i in zip(*[df[s].map(str) for s in unique_column])]
                 else:
-                    uid_col = None
+                    raise ValidationError(f"The number of items listed in unique_column does not match the requirement of existing column in dataframe - {'No items listed' if len(unique_column) == 0 else 'Too many items listed'}")
 
-        # Validate auto find
-        if uid_col is None:
-            # Check for unique identity column and try to auto create one
-            df['UID'] = ['-'.join(i) for i in zip(*[df[s].map(str) for s in df.columns])]
-            if df['UID'].nunique() == len(df):
-                uid_col = 'UID'
-                self.logger.info(f"Auto generate [{uid_col}] column.")
-            else:
-                raise ValueError("No unique column can be created")
-
-        # ask for weight column
-        headers = ['Index', 'Column Name']
-        table = []
-        for i in range(len(df.columns)):
-            if df.dtypes[df.columns[i]].name in ['float64', 'int64']:
-                table.append([str(i), df.columns[i]])
-        self.logger.info(tabulate(table, headers, tablefmt='pretty'))
-
-        # TO DO: Need to add while loop to validate selection
-        weight_col = df.columns[int(input('Please select the weight column (enter index no.): '))]
-        _weight_ls = sorted(list(df[weight_col].unique()))
-        _max_weight = max(_weight_ls)
-
-        # Create random sperator for system generated UID
-        _bgex = '=='
-
-        # Create chances dictionary
-        # chances are the reverse of weights, the more weights the least chance and the less weights the more chanese
-        retry = 0
-        while True:
-            equal_chance = input(tabulate([[1, 'Equal Chance'], [2, 'Weighted Chance']], headers=['Choice', 'Chance Type'], tablefmt='pretty') + "\nSelect Choice 1 or 2: ")
-            # TO DO: while loop validate input
-            if equal_chance == "1":
-                equal_chance = 1
-                break
-            elif equal_chance == "2":
-                equal_chance = 0
-                break
-            else:
-                retry += 1
-                if retry > 3:
-                    raise ValueError(f"Chance input error after multiple retries, expected 1 or 2, given {equal_chance}")
+                if df['UID'].nunique() == len(df['UID']):
+                    uid_col = 'UID'
                 else:
-                    self.logger.info("Invalid input. Please try again.")
-
-        chances = {}
-        for i in range(len(_weight_ls)):
-            if equal_chance:
-                chances[_weight_ls[i]] = 1
+                    raise ValueError(f"Unable to create a column with unique values. Check given column names - {unique_column}")
             else:
-                chances[_weight_ls[i]] = _weight_ls[int(f"-{i+1}")]
+                raise ValueError(f"Some column not found, available columns {df.columns}, given {unique_column}")
+
+        else:
+            raise ValidationError(f"unique_column attribute accepts either string instance or list instance, given {type(unique_column)} instance")
 
         # Create ballot dataframe
+        # Assuming all equal chance
         ballot_ls = []
         for uid in df[uid_col].unique():
-            weight = df[df[uid_col] == uid][weight_col].values[0]
-            chance = chances[weight]
-            for i in range(chance):
-                ballot_ls.append({'Ballot_UID': f'{uid}{_bgex}{i+1}'})
-
+            ballot_ls.append({'Ballot_UID': uid})
         ballot_df = pd.DataFrame(ballot_ls)
 
         self.logger.info(" Configuration End ".center(DISPLAY_UNIT, "=") + "\n")
